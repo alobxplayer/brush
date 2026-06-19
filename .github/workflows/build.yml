@@ -1,0 +1,29 @@
+name: Build Windows App
+
+on:
+  workflow_dispatch: # Кнопка ручного запуска будет тут
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      # Забираем код вместе со всеми скрытыми подмодулями
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      # Собираем только бинарник приложения
+      - name: Build release binary
+        run: cargo build --release
+
+      # Вытаскиваем готовый .exe
+      - name: Upload executable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: brush-windows-bin
+          path: target/release/*.exe
