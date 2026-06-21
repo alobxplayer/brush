@@ -1,7 +1,14 @@
 name: Build Windows App
 
 on:
-  workflow_dispatch: # Кнопка ручного запуска будет тут
+  workflow_dispatch: # Кнопка ручного запуска
+  push:
+    branches:
+      - main # Триггер при слиянии в главную ветку (замените на master, если она называется так)
+
+# Даем права на создание релизов и загрузку файлов
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -21,9 +28,24 @@ jobs:
       - name: Build release binary
         run: cargo build --release
 
-      # Вытаскиваем готовый .exe
+      # Вытаскиваем готовый .exe в артефакты GitHub Actions (как и было)
       - name: Upload executable artifact
         uses: actions/upload-artifact@v4
         with:
           name: brush-windows-bin
           path: target/release/*.exe
+
+      # Создаем или перезаписываем релиз "latest"
+      - name: Update Latest Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Latest Build
+          body: |
+            Автоматическая сборка последней версии приложения из ветки `main`.
+            Дата сборки: ${{ github.event.head_commit.timestamp }}
+          draft: false
+          prerelease: false
+          files: target/release/*.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
